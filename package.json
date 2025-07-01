@@ -1,0 +1,16 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "this is a Backend of our Fyp that is productivity habit tracker.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "javaScript",
+    "backend",
+    "mern"
+  ],
+  "author": "Hanzala Arshad",
+  "license": "ISC"
+}
