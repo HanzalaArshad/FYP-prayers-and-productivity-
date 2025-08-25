@@ -1,7 +1,7 @@
-import Task from "../models/task.model";
-import ApiError from "../utils/ApiError";
-import { ApiResponse } from "../utils/ApiResponse";
-import { asyncHandler } from "../utils/asyncHandler";
+import Task from "../models/task.model.js";
+import ApiError from "../utils/ApiError.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
 
 
 const createTask=asyncHandler(async(req,res,next)=>{
@@ -28,3 +28,7 @@ const createTask=asyncHandler(async(req,res,next)=>{
   throw new ApiError(500,"something went wrong in making task")
  }
 })
+
+
+
+export {createTask}
