@@ -30,5 +30,25 @@ const createTask=asyncHandler(async(req,res,next)=>{
 })
 
 
+const getAllTasks = asyncHandler(async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    if (!userId) {
+      throw new ApiError(400, "User ID is required");
+    }
 
-export {createTask}
+    const tasks = await Task.find({ userId });
+
+    return res.status(200).json(
+      new ApiResponse(200, tasks, "Tasks fetched successfully")
+    );
+
+  } catch (error) {
+    throw new ApiError(500, "Something went wrong in fetching tasks");
+  }
+});
+
+
+
+
+export {createTask,getAllTasks}
