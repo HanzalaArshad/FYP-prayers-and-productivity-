@@ -64,6 +64,11 @@ const userSchema = new mongoose.Schema(
       default: null,
     },
 
+    lastRewardDate: {
+      type: String, // YYYY-MM-DD format
+      default: null,
+    },
+
     refreshToken: {
       type: String,
     },
@@ -81,7 +86,6 @@ userSchema.pre("save", async function (next) {
 });
 
 // password verification
-
 userSchema.methods.isPasswordCorrect = async function (password) {
   return await bcrypt.compare(password, this.password);
 };

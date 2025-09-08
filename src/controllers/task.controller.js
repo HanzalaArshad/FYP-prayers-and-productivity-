@@ -54,7 +54,7 @@ const getTaskById=asyncHandler(async(req,res,next)=>{
 
     }
 
-    const task=await Task.findById({_id:taskId,userId});
+    const task=await Task.findOne({_id:taskId,userId});
     if(!task){
       throw new ApiError(404,"task not found")
     }
@@ -116,6 +116,7 @@ const deleteTask=asyncHandler(async(req,res,next)=>{
 
   return res.status(200).json(new ApiResponse(200, null, "Task deleted successfully"));
 })
+
 const markTaskComplete = asyncHandler(async (req, res, next) => {
   const taskId = req.params.id;
   const userId = req.user._id;
@@ -134,7 +135,7 @@ const markTaskComplete = asyncHandler(async (req, res, next) => {
     throw new ApiError(404, "Task not found or you are not authorized");
   }
 
-  task.isCompleted = true; // mark as complete
+task.isCompleted = req.body.isCompleted ?? true;
   await task.save();
 
   return res
