@@ -23,7 +23,7 @@ const challengeParticipantSchema=new mongoose.Schema({
   },
   currentDay:{
     type:Number,
-    default:1
+    default:0
   },
   completed:{
     type:Boolean,
@@ -37,6 +37,5 @@ const challengeParticipantSchema=new mongoose.Schema({
 },{timestamps:true})
 
 
-const challengeParticipant=mongoose.model("challengeParticipant",challengeParticipantSchema)
-
-export default challengeParticipant;
+const ChallengeParticipant = mongoose.model("ChallengeParticipant", challengeParticipantSchema);
+export default ChallengeParticipant;

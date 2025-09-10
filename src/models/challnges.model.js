@@ -10,6 +10,7 @@ const challengesSchema=new mongoose.Schema({
   },
   description:{
     type:String,
+    required:true,
   },
   isGroup:{
     type:Boolean,

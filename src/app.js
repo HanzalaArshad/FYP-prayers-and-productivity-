@@ -4,6 +4,7 @@ import cors from "cors"
 import userRouter from "./routes/user.routes.js"
 import taskRouter from "./routes/task.routes.js"
 import prayerRoutes from "./routes/prayer.routes.js"
+import challengeRouter from "./routes/challenge.routes.js"
 
 
 
@@ -23,4 +24,5 @@ app.use(cookieParser())
 app.use("/api/v1/user",userRouter)
 app.use("/api/v1/task",taskRouter)
 app.use("/api/v1/prayer",prayerRoutes)
+app.use("/api/v1/challenge",challengeRouter)
 export {app}
