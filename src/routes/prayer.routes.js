@@ -8,6 +8,6 @@ const prayerRoutes=Router()
 
 prayerRoutes.route("/prayers").post(verifyJwt,logPrayer)
 prayerRoutes.route("/prayers/today").get(verifyJwt,getPrayerToday)
-prayerRoutes.route("/:prayerId/compelete").post(verifyJwt,markPrayerCompleted)
+prayerRoutes.route("/:prayerId/complete").post(verifyJwt,markPrayerCompleted)
 
 export default prayerRoutes;
