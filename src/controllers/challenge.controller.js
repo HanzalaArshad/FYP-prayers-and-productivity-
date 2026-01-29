@@ -132,4 +132,44 @@ const getChallengeDetails = asyncHandler(async (req, res) => {
   return res.status(200).json(new ApiResponse(200, { challenge, participants }, "Challenge details fetched"));
 });
 
-export { createChallenge, joinChallenge, updateProgress, getMyChallenges, getChallengeDetails };
+const getAllChallenges = asyncHandler(async (req, res) => {
+  const { status, isGroup } = req.query;
+  const userId = req.user._id;
+
+  const filter = {};
+  if (status) {
+    filter.status = status;
+  }
+  if (isGroup !== undefined) {
+    filter.isGroup = isGroup === 'true';
+  }
+
+  const challenges = await Challenge.find(filter)
+    .populate("createdBy", "username fullName email")
+    .sort({ createdAt: -1 });
+
+  const challengesWithParticipation = await Promise.all(
+    challenges.map(async (challenge) => {
+      const participation = await ChallengeParticipant.findOne({ 
+        userId, 
+        challengeId: challenge._id 
+      });
+      
+      const participantCount = await ChallengeParticipant.countDocuments({ 
+        challengeId: challenge._id 
+      });
+
+      return {
+        ...challenge.toObject(),
+        hasJoined: !!participation,
+        participantCount
+      };
+    })
+  );
+
+  return res.status(200).json(
+    new ApiResponse(200, challengesWithParticipation, "All challenges fetched successfully")
+  );
+});
+
+export { createChallenge, joinChallenge, updateProgress, getMyChallenges, getChallengeDetails, getAllChallenges };

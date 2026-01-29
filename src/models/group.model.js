@@ -20,6 +20,11 @@ const groupSchema=new mongoose.Schema({
     required:true,
     index:true
   },
+  inviteToken:{
+    type:String,
+    sparse:true,
+    unique:true
+  },
 
 },{timestamps:true})
 

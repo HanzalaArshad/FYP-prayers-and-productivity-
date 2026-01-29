@@ -27,4 +27,20 @@ app.use("/api/v1/task",taskRouter)
 app.use("/api/v1/prayer",prayerRoutes)
 app.use("/api/v1/challenge",challengeRouter)
 app.use("/api/v1/group",groupRouter)
+
+app.use((err, req, res, next) => {
+  const statusCode = err.statusCode || 500;
+  const message = err.message || "Internal Server Error";
+  
+  console.error('Error:', err);
+  
+  res.status(statusCode).json({
+    success: false,
+    statusCode,
+    message,
+    errors: err.errors || [],
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+  });
+});
+
 export {app}
