@@ -28,6 +28,8 @@ app.use("/api/v1/task",taskRouter)
 app.use("/api/v1/prayer",prayerRoutes)
 app.use("/api/v1/challenge",challengeRouter)
 app.use("/api/v1/group",groupRouter)
+app.use("/api/v1/groupChallenge",groupChallengerouter)
+
 
 app.use((err, req, res, next) => {
   const statusCode = err.statusCode || 500;
