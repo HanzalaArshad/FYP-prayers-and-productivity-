@@ -3,7 +3,7 @@ import { verifyJwt } from "../middlewares/auth.middleware.js";
 import { addMember, createGroup, deleteGroup, getGroupDetails, getMyGroups, joinGroup, removeMember, searchGroups } from "../controllers/group.controller.js";
 
 
-const groupRouter= Router()
+const groupRouter = Router()
 
 groupRouter.route("/createGroup").post(verifyJwt,createGroup)
 groupRouter.route("/:id/join").post(verifyJwt, joinGroup);
