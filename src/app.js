@@ -6,6 +6,7 @@ import taskRouter from "./routes/task.routes.js"
 import prayerRoutes from "./routes/prayer.routes.js"
 import challengeRouter from "./routes/challenge.routes.js"
 import groupRouter from "./routes/group.routes.js"
+import groupChallengerouter from "./routes/groupChallenge.routes.js"
 
 
 
@@ -27,4 +28,7 @@ app.use("/api/v1/task",taskRouter)
 app.use("/api/v1/prayer",prayerRoutes)
 app.use("/api/v1/challenge",challengeRouter)
 app.use("/api/v1/group",groupRouter)
+app.use("/api/v1/groupChallenge",groupChallengerouter)
+
+
 export {app}

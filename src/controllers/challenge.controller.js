@@ -5,7 +5,7 @@ import validator from "validator";
 import ApiError from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import Challenge from "../models/challnges.model.js";
+import Challenge from "../models/challenges.model.js";
 
 const createChallenge = asyncHandler(async (req, res) => {
   const { title, description, goal, totalDays, isGroup } = req.body;

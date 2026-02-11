@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { changePassword, getCurrentUser, lastActivity, login, logout, refreshAccessToken, registerUser, UpdateAccountDetails } from "../controllers/user.controller.js";
+import { changePassword, getCurrentUser, lastActivity, login, logout, refreshAccessToken, registerUser, searchUsers, UpdateAccountDetails } from "../controllers/user.controller.js";
 import { verifyJwt } from "../middlewares/auth.middleware.js";
 
 
@@ -18,6 +18,7 @@ userRouter.use(verifyJwt, lastActivity);
 userRouter.route("/change-Password").post(verifyJwt,changePassword)
 userRouter.route("/my-account").get(verifyJwt,getCurrentUser)
 userRouter.route("/update-Account").post(verifyJwt,UpdateAccountDetails)
+userRouter.route("/search-user").get(verifyJwt,searchUsers)
 
 
 export default userRouter;

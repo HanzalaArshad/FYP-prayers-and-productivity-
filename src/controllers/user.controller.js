@@ -269,6 +269,24 @@ const lastActivity=asyncHandler(async(req,res,next)=>{
   }
 })
 
+const searchUsers = asyncHandler(async (req, res) => {
+  const { query } = req.query;
+  if (!query || query.trim().length < 2) {
+    throw new ApiError(400, "Search query must be at least 2 characters");
+  }
+
+  const users = await User.find({
+    $or: [
+      { username: { $regex: query, $options: "i" } },
+      { fullName: { $regex: query, $options: "i" } },
+    ],
+  })
+  .select("-password -refreshToken")
+  .limit(10);
+
+  return res.status(200).json(new ApiResponse(200, users, "Users found"));
+});
+
 export {
   generateAccessAndRefreshToken,
   registerUser,
@@ -278,5 +296,6 @@ export {
   getCurrentUser,
   UpdateAccountDetails,
   refreshAccessToken,
-  lastActivity
+  lastActivity,
+  searchUsers
 };

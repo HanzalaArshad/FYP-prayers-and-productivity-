@@ -15,14 +15,20 @@ const groupMembers=new mongoose.Schema({
     required:true,
     index:true
   },
+  role: {
+      type: String,
+      enum: ["admin", "member"],
+      default: "member",
+    },
   joinedAt:{
     type:Date,
     default:Date.now
     
-  }
+  },
+
 },{timestamps:true})
 
 
-const GroupMembers=mongoose.model("GroupMembers",groupMembers)
+const GroupMember=mongoose.model("GroupMember",groupMembers)
 
-export default GroupMembers;
+export default GroupMember;

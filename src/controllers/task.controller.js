@@ -118,7 +118,7 @@ const deleteTask=asyncHandler(async(req,res,next)=>{
 })
 
 const markTaskComplete = asyncHandler(async (req, res, next) => {
-  const taskId = req.params.id;
+  const {id:taskId} = req.params;
   const userId = req.user._id;
 
   if (!taskId) {
