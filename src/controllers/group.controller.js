@@ -4,6 +4,8 @@ import Group from "../models/group.model.js";
 import GroupMember from "../models/groupMember.model.js";
 import Challenge from "../models/challenges.model.js";
 import ChallengeParticipant from "../models/challengeParticipant.model.js";
+import GroupChallenge from "../models/groupChallenges.model.js";
+import GroupChallengeParticipant from "../models/groupChallengesParticipant.model.js";
 import {  ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import ApiError from "../utils/ApiError.js";
@@ -51,9 +53,18 @@ const joinGroup = asyncHandler(async (req, res) => {
   if (existing) throw new ApiError(400, "User already in group");
 
   const member = await GroupMember.create({ groupId, userId, role: "member" });
-  const challenge = await Challenge.findOne({ groupId, isGroup: true });
-  if (challenge) {
-    await ChallengeParticipant.create({ userId, challengeId: challenge._id, currentDay: 1, completed: false });
+  
+  // Check for GROUP CHALLENGE (not old Challenge model)
+  const groupChallenge = await GroupChallenge.findOne({ groupId, status: "active" });
+  if (groupChallenge) {
+    await GroupChallengeParticipant.create({ 
+      userId, 
+      groupChallengeId: groupChallenge._id, 
+      currentDay: 1, 
+      completed: false,
+      progress: 0,
+      dailyProgress: []
+    });
   }
 
   return res.status(201).json(new ApiResponse(201, member, "Joined group successfully"));
@@ -77,9 +88,18 @@ const addMember = asyncHandler(async (req, res) => {
   if (existing) throw new ApiError(400, "User already in group");
 
   const member = await GroupMember.create({ groupId, userId: memberId, role: "member" });
-  const challenge = await Challenge.findOne({ groupId, isGroup: true });
-  if (challenge) {
-    await ChallengeParticipant.create({ userId: memberId, challengeId: challenge._id, currentDay: 1, completed: false });
+  
+  // Check for GROUP CHALLENGE (not old Challenge model)
+  const groupChallenge = await GroupChallenge.findOne({ groupId, status: "active" });
+  if (groupChallenge) {
+    await GroupChallengeParticipant.create({ 
+      userId: memberId, 
+      groupChallengeId: groupChallenge._id, 
+      currentDay: 1, 
+      completed: false,
+      progress: 0,
+      dailyProgress: []
+    });
   }
 
   return res.status(201).json(new ApiResponse(201, member, "Member added successfully"));
@@ -103,9 +123,10 @@ const removeMember = asyncHandler(async (req, res) => {
   const member = await GroupMember.findOneAndDelete({ groupId, userId: memberId });
   if (!member) throw new ApiError(404, "Member not found in group");
 
-  const challenge = await Challenge.findOne({ groupId, isGroup: true });
-  if (challenge) {
-    await ChallengeParticipant.deleteOne({ userId: memberId, challengeId: challenge._id });
+  // Remove from GROUP CHALLENGE participants
+  const groupChallenge = await GroupChallenge.findOne({ groupId, status: "active" });
+  if (groupChallenge) {
+    await GroupChallengeParticipant.deleteOne({ userId: memberId, groupChallengeId: groupChallenge._id });
   }
 
   return res.status(200).json(new ApiResponse(200, null, "Member removed successfully"));
@@ -121,9 +142,19 @@ const deleteGroup = asyncHandler(async (req, res) => {
   const isAdmin = await GroupMember.findOne({ groupId, userId, role: "admin" });
   if (!isAdmin) throw new ApiError(403, "Only admins can delete group");
 
+  // Delete group members
   await GroupMember.deleteMany({ groupId });
+  
+  // Delete GROUP CHALLENGES and participants
+  const groupChallenges = await GroupChallenge.find({ groupId });
+  const challengeIds = groupChallenges.map(c => c._id);
+  await GroupChallengeParticipant.deleteMany({ groupChallengeId: { $in: challengeIds } });
+  await GroupChallenge.deleteMany({ groupId });
+  
+  // Delete old Challenge model entries if any
   await Challenge.deleteMany({ groupId, isGroup: true });
   await ChallengeParticipant.deleteMany({ challengeId: { $in: await Challenge.find({ groupId }).distinct("_id") } });
+  
   await Group.findByIdAndDelete(groupId);
 
   return res.status(200).json(new ApiResponse(200, null, "Group deleted successfully"));
@@ -177,9 +208,12 @@ const getGroupDetails = asyncHandler(async (req, res) => {
     joinedAt: m.joinedAt,
   }));
 
-  const challenge = await Challenge.findOne({ groupId, isGroup: true }).populate("createdBy", "username fullName");
+  // ✅ FIX: Fetch GROUP CHALLENGE instead of old Challenge model
+  const challenge = await GroupChallenge.findOne({ groupId, status: "active" }).populate("createdBy", "username fullName");
+  
+  // ✅ FIX: Fetch GROUP CHALLENGE PARTICIPANTS instead of old ChallengeParticipant
   const participants = challenge
-    ? await ChallengeParticipant.find({ challengeId: challenge._id }).populate("userId", "username fullName")
+    ? await GroupChallengeParticipant.find({ groupChallengeId: challenge._id }).populate("userId", "username fullName")
     : [];
 
   return res.status(200).json(
@@ -187,4 +221,76 @@ const getGroupDetails = asyncHandler(async (req, res) => {
   );
 });
 
-export { createGroup, joinGroup, addMember, removeMember, deleteGroup, searchGroups, getMyGroups, getGroupDetails };
+
+const getAllGroups = asyncHandler(async (req, res) => {
+  const userId = req.user?._id;
+
+  const groups = await Group.find({
+    isPrivate: false,
+    joinDeadline: { $gte: new Date() }
+  })
+  .populate("createdBy", "username fullName")
+  .select("name description createdBy joinDeadline createdAt");
+
+  const groupsWithMeta = await Promise.all(
+    groups.map(async (group) => {
+      const memberCount = await GroupMember.countDocuments({ groupId: group._id });
+      const hasJoined = userId ? await GroupMember.exists({ groupId: group._id, userId }) : false;
+
+      return {
+        ...group.toObject(),
+        memberCount,
+        hasJoined: !!hasJoined
+      };
+    })
+  );
+
+  return res.status(200).json(
+    new ApiResponse(200, groupsWithMeta, "All public groups fetched successfully")
+  );
+});
+
+const leaveGroup = asyncHandler(async (req, res) => {
+  const { id: groupId } = req.params;
+  const userId = req.user._id;
+
+  if (!mongoose.isValidObjectId(groupId)) throw new ApiError(400, "Invalid group ID");
+
+  const group = await Group.findById(groupId);
+  if (!group) throw new ApiError(404, "Group not found");
+
+  const member = await GroupMember.findOne({ groupId, userId });
+  if (!member) throw new ApiError(404, "You are not a member of this group");
+
+  // Prevent admin from leaving if they're the only admin
+  if (member.role === "admin") {
+    const adminCount = await GroupMember.countDocuments({ groupId, role: "admin" });
+    if (adminCount === 1) {
+      throw new ApiError(400, "You are the only admin. Please assign another admin before leaving or delete the group.");
+    }
+  }
+
+  // Remove from group
+  await GroupMember.findByIdAndDelete(member._id);
+
+  // Remove from active group challenge if exists
+  const groupChallenge = await GroupChallenge.findOne({ groupId, status: "active" });
+  if (groupChallenge) {
+    await GroupChallengeParticipant.deleteOne({ userId, groupChallengeId: groupChallenge._id });
+  }
+
+  return res.status(200).json(new ApiResponse(200, null, "Left group successfully"));
+});
+
+export { 
+  createGroup, 
+  joinGroup, 
+  addMember, 
+  removeMember, 
+  deleteGroup, 
+  searchGroups, 
+  getMyGroups, 
+  getGroupDetails,
+  getAllGroups,
+  leaveGroup 
+};

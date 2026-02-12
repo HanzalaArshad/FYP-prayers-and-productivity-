@@ -10,7 +10,7 @@ const groupChallengeParticipantSchema = new mongoose.Schema(
     joinedAt: { type: Date, default: Date.now },
     dailyProgress: [
       {
-        date: { type: Date, required: true }, // Date of progress update
+        date: { type: Date, required: true }, 
         increment: { type: Number, default: 1, min: 1 }, // Progress added that day
       },
     ],
